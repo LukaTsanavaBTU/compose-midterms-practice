@@ -1,7 +1,6 @@
 package com.example.midtermspracticeproject
 
 import android.os.Bundle
-import android.widget.Space
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -23,8 +22,8 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,11 +32,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
@@ -52,7 +49,6 @@ import com.example.midtermspracticeproject.ui.theme.BackgroundPrimary
 import com.example.midtermspracticeproject.ui.theme.MidtermsPracticeProjectTheme
 import com.example.midtermspracticeproject.ui.theme.TextPrimary
 import com.example.midtermspracticeproject.ui.theme.TextSecondary
-import kotlinx.serialization.Serializable
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,7 +68,7 @@ class MainActivity : ComponentActivity() {
                         val selectedMessage by remember { mutableStateOf(dummyMessagesList.find { it.id == message.selectedMessageId }) }
 
                         selectedMessage?.let { msg ->
-                            SelectedMessageScreen(msg)
+                            SelectedMessageScreen(msg, { navController.popBackStack() })
                         } ?: run {
                             Text(text = "Message Not Found")
                         }
@@ -85,14 +81,13 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MessagesListScreen(
-    messages: List<Message>,
-    onSelectMessage: (id: Int) -> Unit,
-    modifier: Modifier = Modifier
+    messages: List<Message>, onSelectMessage: (id: Int) -> Unit, modifier: Modifier = Modifier
 ) {
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .background(BackgroundPrimary)
+            .padding(vertical = 16.dp)
     ) {
         items(items = messages, key = { item -> item.id }) { item ->
             MessageItem(item, { id -> onSelectMessage(id) })
@@ -101,15 +96,30 @@ fun MessagesListScreen(
 }
 
 @Composable
-fun SelectedMessageScreen(message: Message) {
-    Text(text = "User ${message.userName}")
+fun SelectedMessageScreen(
+    message: Message, onBackPress: () -> Unit, modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(BackgroundPrimary)
+            .padding(vertical = 16.dp)
+    ) {
+        IconButton(onClick = { onBackPress() }) {
+            Icon(
+                painter = painterResource(id = R.drawable.baseline_arrow_back_24),
+                contentDescription = "Back",
+                tint = TextPrimary
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        MessageItem(message, {})
+    }
 }
 
 @Composable
 fun MessageItem(
-    message: Message,
-    onSelectMessage: (id: Int) -> Unit,
-    modifier: Modifier = Modifier
+    message: Message, onSelectMessage: (id: Int) -> Unit, modifier: Modifier = Modifier
 ) {
     Row(
         modifier = modifier
@@ -149,7 +159,7 @@ fun MessageItem(
             Text(
                 text = message.timeSent,
                 modifier = Modifier.wrapContentSize(),
-                color = TextSecondary,
+                color = if (message.unreadCount > 0) AccentTeal else TextSecondary,
                 fontSize = 14.sp
             )
             Spacer(modifier = Modifier.height(4.dp))
@@ -161,9 +171,7 @@ fun MessageItem(
                     contentAlignment = Alignment.Center // Centers the text perfectly
                 ) {
                     Text(
-                        text = "${message.unreadCount}",
-                        color = BackgroundPrimary,
-                        fontSize = 12.sp
+                        text = "${message.unreadCount}", color = BackgroundPrimary, fontSize = 12.sp
                     )
                 }
             }
@@ -171,11 +179,6 @@ fun MessageItem(
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFF0A0A0A)
-@Composable
-fun MessageListPreview() {
-    MessagesListScreen(dummyMessagesList, {})
-}
 
 
 
